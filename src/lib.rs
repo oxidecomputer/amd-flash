@@ -10,7 +10,7 @@ pub type Location = u32;
 pub trait Flash {
     fn block_size(&self) -> usize;
     fn read_block(&self, location: Location, buffer: &mut [u8]) -> Result<()>;
-    fn write_block(&self, location: Location, buffer: &[u8]) -> Result<()>;
+    fn write_block(&mut self, location: Location, buffer: &[u8]) -> Result<()>;
     fn erase_block(&self, location: Location) -> Result<()>;
 }
 
