@@ -1,5 +1,7 @@
 
+#[derive(Debug)]
 pub enum Error {
+    Io,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
