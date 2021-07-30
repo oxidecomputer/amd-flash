@@ -13,7 +13,7 @@ pub trait FlashRead<const READING_BLOCK_SIZE: usize> {
 
 pub trait FlashWrite<const WRITING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
     fn write_block(&mut self, location: Location, buffer: &[u8; WRITING_BLOCK_SIZE]) -> Result<()>;
-    fn erase_block(&self, location: Location) -> Result<()>;
+    fn erase_block(&mut self, location: Location) -> Result<()>;
 }
 
 #[cfg(test)]
