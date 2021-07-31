@@ -1,4 +1,6 @@
 
+use std::convert::TryInto;
+
 #[derive(Debug)]
 pub enum Error {
     Io,
@@ -14,6 +16,16 @@ pub trait FlashRead<const READING_BLOCK_SIZE: usize> {
 pub trait FlashWrite<const WRITING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
     fn write_block(&mut self, location: Location, buffer: &[u8; WRITING_BLOCK_SIZE]) -> Result<()>;
     fn erase_block(&mut self, location: Location) -> Result<()>;
+    fn grow_to_erasure_block(beginning: Location, end: Location) -> (Location, Location) {
+        let erasure_block_size: u32 = ERASURE_BLOCK_SIZE.try_into().unwrap();
+        let beginning_misalignment = beginning % erasure_block_size;
+        let end_misalignment = if end % erasure_block_size == 0 {
+            0
+        } else {
+            erasure_block_size - (end % erasure_block_size)
+        };
+        (beginning - beginning_misalignment, end + end_misalignment)
+    }
 }
 
 #[cfg(test)]
