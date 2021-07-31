@@ -24,7 +24,9 @@ pub trait FlashWrite<const WRITING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: 
         } else {
             erasure_block_size - (end % erasure_block_size)
         };
-        (beginning - beginning_misalignment, end + end_misalignment)
+        let beginning = beginning.saturating_sub(beginning_misalignment);
+        let end = end.checked_add(end_misalignment).unwrap();
+        (beginning, end)
     }
 }
 
