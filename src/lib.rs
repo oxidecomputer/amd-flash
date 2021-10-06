@@ -9,8 +9,9 @@ pub enum Error {
 pub type Result<Q> = core::result::Result<Q, Error>;
 pub type Location = u32;
 
-pub trait FlashRead<const READING_BLOCK_SIZE: usize> {
+pub trait FlashRead<const READING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
     fn read_block(&self, location: Location, buffer: &mut [u8; READING_BLOCK_SIZE]) -> Result<()>;
+    fn read_erasure_block(&self, location: Location, buffer: &mut [u8; ERASURE_BLOCK_SIZE]) -> Result<()>;
 }
 
 pub trait FlashWrite<const WRITING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
@@ -47,9 +48,14 @@ mod tests {
         }
     }
 
-    impl FlashRead<0x1000> for FlashImage<'_> {
+    impl FlashRead<0x1000, 0x2_0000> for FlashImage<'_> {
         fn read_block(&self, location: Location, buffer: &mut [u8; 0x1000]) -> Result<()> {
             let block = &self.buf[location as usize .. (location as usize + 0x1000)];
+            buffer[..].copy_from_slice(block);
+            Ok(())
+        }
+        fn read_erasure_block(&self, location: Location, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
+            let block = &self.buf[location as usize .. (location as usize + 0x2_0000)];
             buffer[..].copy_from_slice(block);
             Ok(())
         }
