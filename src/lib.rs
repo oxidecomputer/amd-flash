@@ -15,7 +15,6 @@ pub trait FlashRead<const READING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: u
 }
 
 pub trait FlashWrite<const WRITING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
-    fn write_block(&self, location: Location, buffer: &[u8; WRITING_BLOCK_SIZE]) -> Result<()>;
     fn erase_block(&self, location: Location) -> Result<()>;
     fn erase_and_write_block(&self, location: Location, buffer: &[u8; ERASURE_BLOCK_SIZE]) -> Result<()>;
     fn grow_to_erasure_block(beginning: Location, end: Location) -> (Location, Location) {
@@ -62,16 +61,16 @@ mod tests {
     }
 
     impl FlashWrite<0x1000, 0x2_0000> for FlashImage<'_> {
-        fn write_block(&mut self, location: Location, buffer: &[u8; 0x1000]) -> Result<()> {
-            let block = &mut self.buf[location as usize .. (location as usize + 0x1000)];
-            block.copy_from_slice(&buffer[..]);
-            Ok(())
-        }
         fn erase_block(&mut self, location: Location) -> Result<()> {
             let block = &mut self.buf[location as usize .. (location as usize + 0x2_0000)];
             for e in block.iter_mut() {
                 *e = 0xFF;
             }
+            Ok(())
+        }
+        fn erase_and_write_block(&mut self, location: Location, buffer: &[u8; 0x2_0000]) -> Result<()> {
+            let block = &mut self.buf[location as usize .. (location as usize + 0x2_0000)];
+            block.copy_from_slice(&buffer[..]);
             Ok(())
         }
     }
