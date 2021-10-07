@@ -11,8 +11,11 @@ pub enum Error {
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
+
+/// This is any Location on the Flash chip
 pub type Location = u32;
 
+/// This is a Location which definitely is aligned on an erase block boundary
 #[derive(Clone, Copy)]
 pub struct ErasableLocation<const ERASABLE_BLOCK_SIZE: usize>(Location);
 
@@ -57,19 +60,19 @@ impl<const ERASABLE_BLOCK_SIZE: usize> From<ErasableLocation<ERASABLE_BLOCK_SIZE
 
 pub trait FlashRead<const ERASABLE_BLOCK_SIZE: usize> {
     fn read_exact(&self, location: Location, buffer: &mut [u8]) -> Result<usize>;
-    fn read_erasure_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
+    fn read_erasable_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
 }
 
 pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize> {
     fn erase_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Result<()>;
     fn erase_and_write_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &[u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
-    fn grow_to_erasure_block(beginning: Location, end: Location) -> (Location, Location) {
-        let erasure_block_size: u32 = ERASABLE_BLOCK_SIZE.try_into().unwrap();
-        let beginning_misalignment = beginning % erasure_block_size;
-        let end_misalignment = if end % erasure_block_size == 0 {
+    fn grow_to_erasable_block(beginning: Location, end: Location) -> (Location, Location) {
+        let erasable_block_size: u32 = ERASABLE_BLOCK_SIZE.try_into().unwrap();
+        let beginning_misalignment = beginning % erasable_block_size;
+        let end_misalignment = if end % erasable_block_size == 0 {
             0
         } else {
-            erasure_block_size - (end % erasure_block_size)
+            erasable_block_size - (end % erasable_block_size)
         };
         let beginning = beginning.saturating_sub(beginning_misalignment);
         let end = end.checked_add(end_misalignment).unwrap();
@@ -103,7 +106,7 @@ mod tests {
             buffer[..].copy_from_slice(block);
             Ok(len)
         }
-        fn read_erasure_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
+        fn read_erasable_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
             let location: Location = location.into();
             let buf = self.buf.get();
             let block = &buf[location as usize .. (location as usize + 0x2_0000)];
