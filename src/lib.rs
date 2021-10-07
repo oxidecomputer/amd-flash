@@ -14,9 +14,9 @@ pub type Result<Q> = core::result::Result<Q, Error>;
 pub type Location = u32;
 
 #[derive(Clone, Copy)]
-pub struct ErasableLocation<const ERASURE_BLOCK_SIZE: usize>(Location);
+pub struct ErasableLocation<const ERASABLE_BLOCK_SIZE: usize>(Location);
 
-impl<const ERASURE_BLOCK_SIZE: usize> ErasableLocation<ERASURE_BLOCK_SIZE> {
+impl<const ERASABLE_BLOCK_SIZE: usize> ErasableLocation<ERASABLE_BLOCK_SIZE> {
     /// Note: Assumed beginning <= self, otherwise result will be 0.
     pub fn distance_between(beginning: Self, end: Self) -> u32 {
         let beginning = beginning.0;
@@ -28,7 +28,7 @@ impl<const ERASURE_BLOCK_SIZE: usize> ErasableLocation<ERASURE_BLOCK_SIZE> {
         }
     }
     pub fn advance(&self, amount: usize) -> Result<Self> {
-        if amount % ERASURE_BLOCK_SIZE == 0 {
+        if amount % ERASABLE_BLOCK_SIZE == 0 {
             let pos = (self.0 as usize).checked_add(amount).ok_or(Error::Alignment)?;
             Ok(Self(pos.try_into().map_err(|_| Error::Alignment)?))
         } else {
@@ -37,11 +37,11 @@ impl<const ERASURE_BLOCK_SIZE: usize> ErasableLocation<ERASURE_BLOCK_SIZE> {
     }
 }
 
-impl<const ERASURE_BLOCK_SIZE: usize> TryFrom<Location> for ErasableLocation<ERASURE_BLOCK_SIZE> {
+impl<const ERASABLE_BLOCK_SIZE: usize> TryFrom<Location> for ErasableLocation<ERASABLE_BLOCK_SIZE> {
     type Error = Error;
 
     fn try_from(value: Location) -> Result<Self> {
-        if (value as usize) % ERASURE_BLOCK_SIZE == 0 {
+        if (value as usize) % ERASABLE_BLOCK_SIZE == 0 {
             Ok(Self(value))
         } else {
             Err(Error::Alignment)
@@ -49,22 +49,22 @@ impl<const ERASURE_BLOCK_SIZE: usize> TryFrom<Location> for ErasableLocation<ERA
     }
 }
 
-impl<const ERASURE_BLOCK_SIZE: usize> From<ErasableLocation<ERASURE_BLOCK_SIZE>> for Location {
-    fn from(source: ErasableLocation<ERASURE_BLOCK_SIZE>) -> Self {
+impl<const ERASABLE_BLOCK_SIZE: usize> From<ErasableLocation<ERASABLE_BLOCK_SIZE>> for Location {
+    fn from(source: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Self {
         source.0
     }
 }
 
-pub trait FlashRead<const ERASURE_BLOCK_SIZE: usize> {
+pub trait FlashRead<const ERASABLE_BLOCK_SIZE: usize> {
     fn read_exact(&self, location: Location, buffer: &mut [u8]) -> Result<usize>;
-    fn read_erasure_block(&self, location: ErasableLocation<ERASURE_BLOCK_SIZE>, buffer: &mut [u8; ERASURE_BLOCK_SIZE]) -> Result<()>;
+    fn read_erasure_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
 }
 
-pub trait FlashWrite<const ERASURE_BLOCK_SIZE: usize> {
-    fn erase_block(&self, location: ErasableLocation<ERASURE_BLOCK_SIZE>) -> Result<()>;
-    fn erase_and_write_block(&self, location: ErasableLocation<ERASURE_BLOCK_SIZE>, buffer: &[u8; ERASURE_BLOCK_SIZE]) -> Result<()>;
+pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize> {
+    fn erase_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Result<()>;
+    fn erase_and_write_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &[u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
     fn grow_to_erasure_block(beginning: Location, end: Location) -> (Location, Location) {
-        let erasure_block_size: u32 = ERASURE_BLOCK_SIZE.try_into().unwrap();
+        let erasure_block_size: u32 = ERASABLE_BLOCK_SIZE.try_into().unwrap();
         let beginning_misalignment = beginning % erasure_block_size;
         let end_misalignment = if end % erasure_block_size == 0 {
             0
@@ -103,7 +103,7 @@ mod tests {
             buffer[..].copy_from_slice(block);
             Ok(len)
         }
-        fn read_erasure_block(&self, location: ErasableLocation<ERASURE_BLOCK_SIZE>, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
+        fn read_erasure_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
             let location: Location = location.into();
             let buf = self.buf.get();
             let block = &buf[location as usize .. (location as usize + 0x2_0000)];
@@ -113,7 +113,7 @@ mod tests {
     }
 
     impl FlashWrite<0x2_0000> for FlashImage<'_> {
-        fn erase_block(&self, location: ErasableLocation<ERASURE_BLOCK_SIZE>) -> Result<()> {
+        fn erase_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Result<()> {
             let location: Location = location.into();
             let mut buf = self.buf.get().clone();
             let block = &mut buf[location as usize .. (location as usize + 0x2_0000)];
