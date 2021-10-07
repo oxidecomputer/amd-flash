@@ -9,12 +9,12 @@ pub enum Error {
 pub type Result<Q> = core::result::Result<Q, Error>;
 pub type Location = u32;
 
-pub trait FlashRead<const READING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
-    fn read_block(&self, location: Location, buffer: &mut [u8; READING_BLOCK_SIZE]) -> Result<()>;
+pub trait FlashRead<const ERASURE_BLOCK_SIZE: usize> {
+    fn read_exact(&self, location: Location, buffer: &mut [u8]) -> Result<usize>;
     fn read_erasure_block(&self, location: Location, buffer: &mut [u8; ERASURE_BLOCK_SIZE]) -> Result<()>;
 }
 
-pub trait FlashWrite<const WRITING_BLOCK_SIZE: usize, const ERASURE_BLOCK_SIZE: usize> {
+pub trait FlashWrite<const ERASURE_BLOCK_SIZE: usize> {
     fn erase_block(&self, location: Location) -> Result<()>;
     fn erase_and_write_block(&self, location: Location, buffer: &[u8; ERASURE_BLOCK_SIZE]) -> Result<()>;
     fn grow_to_erasure_block(beginning: Location, end: Location) -> (Location, Location) {
@@ -47,7 +47,7 @@ mod tests {
         }
     }
 
-    impl FlashRead<0x1000, 0x2_0000> for FlashImage<'_> {
+    impl FlashRead<0x2_0000> for FlashImage<'_> {
         fn read_block(&self, location: Location, buffer: &mut [u8; 0x1000]) -> Result<()> {
             let block = &self.buf[location as usize .. (location as usize + 0x1000)];
             buffer[..].copy_from_slice(block);
@@ -60,7 +60,7 @@ mod tests {
         }
     }
 
-    impl FlashWrite<0x1000, 0x2_0000> for FlashImage<'_> {
+    impl FlashWrite<0x2_0000> for FlashImage<'_> {
         fn erase_block(&mut self, location: Location) -> Result<()> {
             let block = &mut self.buf[location as usize .. (location as usize + 0x2_0000)];
             for e in block.iter_mut() {
