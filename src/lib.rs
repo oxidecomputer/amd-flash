@@ -19,16 +19,14 @@ pub type Location = u32;
 #[derive(Clone, Copy)]
 pub struct ErasableLocation<const ERASABLE_BLOCK_SIZE: usize>(Location);
 
+// FIXME: (fyi, arg2.saturating_sub(arg1) does that if you hadn't found it)
+
 impl<const ERASABLE_BLOCK_SIZE: usize> ErasableLocation<ERASABLE_BLOCK_SIZE> {
     /// Note: Assumed beginning <= self, otherwise result will be 0.
     pub fn distance_between(beginning: Self, end: Self) -> u32 {
         let beginning = beginning.0;
         let end = end.0;
-        if beginning <= end {
-            end - beginning
-        } else {
-            0
-        }
+        end.saturating_sub(beginning)
     }
     pub fn advance(&self, amount: usize) -> Result<Self> {
         if amount % ERASABLE_BLOCK_SIZE == 0 {
