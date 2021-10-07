@@ -23,7 +23,7 @@ pub struct ErasableLocation<const ERASABLE_BLOCK_SIZE: usize>(Location);
 
 impl<const ERASABLE_BLOCK_SIZE: usize> ErasableLocation<ERASABLE_BLOCK_SIZE> {
     /// Note: Assumed beginning <= self, otherwise result will be 0.
-    pub fn distance_between(beginning: Self, end: Self) -> u32 {
+    pub fn extent(beginning: Self, end: Self) -> u32 {
         let beginning = beginning.0;
         let end = end.0;
         end.saturating_sub(beginning)
