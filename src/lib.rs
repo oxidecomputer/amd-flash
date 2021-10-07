@@ -1,5 +1,8 @@
 
-use std::convert::TryInto;
+#![no_std]
+
+use core::convert::TryInto;
+use core::convert::TryFrom;
 
 #[derive(Debug)]
 pub enum Error {
