@@ -104,7 +104,7 @@ mod tests {
             buffer[..].copy_from_slice(block);
             Ok(len)
         }
-        fn read_erasable_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
+        fn read_erasable_block(&self, location: ErasableLocation<0x2_0000>, buffer: &mut [u8; 0x2_0000]) -> Result<()> {
             let location: Location = location.into();
             let buf = self.buf.get();
             let block = &buf[location as usize .. (location as usize + 0x2_0000)];
@@ -114,7 +114,7 @@ mod tests {
     }
 
     impl FlashWrite<0x2_0000> for FlashImage<'_> {
-        fn erase_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Result<()> {
+        fn erase_block(&self, location: ErasableLocation<0x2_0000>) -> Result<()> {
             let location: Location = location.into();
             let mut buf = self.buf.get().clone();
             let block = &mut buf[location as usize .. (location as usize + 0x2_0000)];
@@ -124,7 +124,8 @@ mod tests {
             self.buf.set(buf);
             Ok(())
         }
-        fn erase_and_write_block(&self, location: Location, buffer: &[u8; 0x2_0000]) -> Result<()> {
+        fn erase_and_write_block(&self, location: ErasableLocation<0x2_0000>, buffer: &[u8; 0x2_0000]) -> Result<()> {
+            let location: Location = location.into();
             let mut buf = self.buf.get().clone();
             let block = &mut buf[location as usize .. (location as usize + 0x2_0000)];
             block.copy_from_slice(&buffer[..]);
@@ -137,8 +138,8 @@ mod tests {
     fn flash_image_usage() -> Result<()> {
         let mut storage = vec![0xFF; 0x100_0000];
         let mut flash_image = FlashImage::new(&mut storage[..]);
-        flash_image.erase_and_write_block(0, &[1u8; 0x2_0000])?;
-        flash_image.erase_and_write_block(0x2_0000, &[2u8; 0x2_0000])?;
+        flash_image.erase_and_write_block(ErasableLocation::<0x2_0000>::try_from(Location::from(0)).unwrap(), &[1u8; 0x2_0000])?;
+        flash_image.erase_and_write_block(ErasableLocation::<0x2_0000>::try_from(Location::from(0x2_0000)).unwrap(), &[2u8; 0x2_0000])?;
         let mut buf: [u8; 0x2_0000] = [0u8; 0x2_0000];
         flash_image.read_exact(0, &mut buf)?;
         assert_eq!(buf, [1u8; 0x2_0000]);
