@@ -64,7 +64,7 @@ pub trait FlashRead<const ERASABLE_BLOCK_SIZE: usize> {
 pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize> {
     fn erase_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Result<()>;
     fn erase_and_write_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &[u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
-    fn grow_to_erasable_block(beginning: Location, end: Location) -> (Location, Location) {
+    fn grow_to_erasable_block(&self, beginning: Location, end: Location) -> (Location, Location) {
         let erasable_block_size: u32 = ERASABLE_BLOCK_SIZE.try_into().unwrap();
         let beginning_misalignment = beginning % erasable_block_size;
         let end_misalignment = if end % erasable_block_size == 0 {
