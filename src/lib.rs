@@ -83,7 +83,7 @@ pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize> {
     -> Result<()> {
         for chunk in buf.chunks(ERASABLE_BLOCK_SIZE) {
             let mut raw_chunk: [u8; ERASABLE_BLOCK_SIZE] = [0xFF; ERASABLE_BLOCK_SIZE];
-            &mut raw_chunk[0..chunk.len()].copy_from_slice(chunk);
+            (&mut raw_chunk[0..chunk.len()]).copy_from_slice(chunk);
             self.erase_and_write_block(location, &raw_chunk)?;
         }
         Ok(())
