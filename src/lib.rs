@@ -61,7 +61,7 @@ pub trait FlashRead<const ERASABLE_BLOCK_SIZE: usize> {
     fn read_erasable_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &mut [u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
 }
 
-pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize> {
+pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize>: FlashRead<ERASABLE_BLOCK_SIZE> {
     fn erase_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>) -> Result<()>;
     fn erase_and_write_block(&self, location: ErasableLocation<ERASABLE_BLOCK_SIZE>, buffer: &[u8; ERASABLE_BLOCK_SIZE]) -> Result<()>;
     fn grow_to_erasable_block(&self, beginning: Location, end: Location) -> (Location, Location) {
@@ -76,15 +76,21 @@ pub trait FlashWrite<const ERASABLE_BLOCK_SIZE: usize> {
         let end = end.checked_add(end_misalignment).unwrap();
         (beginning, end)
     }
+    /// This goes to some length to not clobber Flash data after the last chunk.
     fn erase_and_write_blocks(
         &self,
         location: ErasableLocation<ERASABLE_BLOCK_SIZE>,
         buf: &[u8])
     -> Result<()> {
+        let mut location = location;
         for chunk in buf.chunks(ERASABLE_BLOCK_SIZE) {
             let mut raw_chunk: [u8; ERASABLE_BLOCK_SIZE] = [0xFF; ERASABLE_BLOCK_SIZE];
+            if chunk.len() != ERASABLE_BLOCK_SIZE {
+                self.read_erasable_block(location, &mut raw_chunk)?;
+            }
             (&mut raw_chunk[0..chunk.len()]).copy_from_slice(chunk);
             self.erase_and_write_block(location, &raw_chunk)?;
+            location = location.advance(ERASABLE_BLOCK_SIZE)?;
         }
         Ok(())
     }
