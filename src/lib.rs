@@ -23,7 +23,7 @@ pub struct ErasableLocation {
 
 impl ErasableLocation {
     pub fn erasable_block_size(&self) -> usize {
-        self.erasable_block_size as usize
+        self.erasable_block_size
     }
     pub fn erasable_block_mask(&self) -> u32 {
         (self.erasable_block_size as u32) - 1
@@ -128,7 +128,7 @@ pub trait FlashWrite: FlashRead + FlashAlign {
         location: ErasableLocation,
         buffer: &mut [u8],
     ) -> Result<()> {
-        if buffer.len() != self.erasable_block_size() as usize {
+        if buffer.len() != self.erasable_block_size() {
             return Err(Error::Programmer);
         }
         self.read_exact(self.location(location)?, buffer)?;
