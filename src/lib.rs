@@ -15,7 +15,7 @@ pub type Result<Q> = core::result::Result<Q, Error>;
 pub type Location = u32;
 
 /// This is a Location which definitely is aligned on an erase block boundary
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct ErasableLocation {
     location: Location,
     erasable_block_size: usize,
@@ -61,6 +61,7 @@ impl From<ErasableLocation> for Location {
     }
 }
 
+#[derive(Debug)]
 pub struct ErasableRange {
     pub beginning: ErasableLocation, // note: same erasable_block_size assumed
     pub end: ErasableLocation,       // note: same erasable_block_size assumed
@@ -70,10 +71,17 @@ impl ErasableRange {
         assert!(Location::from(beginning) <= Location::from(end)); // TODO nicer
         Self { beginning, end }
     }
-    /// Splits the Range after at least SIZE Byte.
-    pub fn split_at_least(self, size: usize) -> (Self, Self) {
-        let x_end = self.beginning.advance_at_least(size).unwrap();
-        (Self::new(self.beginning, x_end), Self::new(x_end, self.end))
+    /// Splits the Range after at least SIZE Byte, if possible.
+    /// Return the first part. Retain the second part.
+    pub fn take_at_least(&mut self, size: usize) -> Option<Self> {
+        let x_beginning = self.beginning;
+        let x_end = self.beginning.advance_at_least(size).ok()?;
+        if Location::from(x_end) <= Location::from(self.end) {
+            *self = Self::new(x_end, self.end);
+            Some(Self::new(x_beginning, x_end))
+        } else {
+            None
+        }
     }
     /// in Byte
     pub fn capacity(&self) -> usize {
