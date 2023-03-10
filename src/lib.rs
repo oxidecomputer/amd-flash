@@ -1,12 +1,14 @@
 #![no_std]
 
 use core::convert::TryInto;
+pub mod allocators;
 
 #[derive(Debug)]
 pub enum Error {
     Io,
     Alignment,
     Programmer,
+    Size,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
