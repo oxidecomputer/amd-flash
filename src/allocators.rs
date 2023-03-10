@@ -27,9 +27,7 @@ impl ArenaFlashAllocator {
         let a_size = efh_beginning as usize;
         let a = arena.take_at_least(a_size).ok_or(Error::Size)?;
         assert!(Location::from(a.end) as usize == a_size);
-        let _efh_range = arena
-            .take_at_least(efh_size)
-            .ok_or(Error::Size)?;
+        let _efh_range = arena.take_at_least(efh_size).ok_or(Error::Size)?;
         Ok(Self { _efh_range, free_ranges: [a, arena] })
     }
 }
@@ -55,8 +53,8 @@ impl FlashAllocate for ArenaFlashAllocator {
 
 #[cfg(test)]
 mod allocator_tests {
-    use super::*;
     use super::super::{FlashAlign, Location};
+    use super::*;
     fn intersect(
         a: &ErasableRange,
         b: &ErasableRange,
